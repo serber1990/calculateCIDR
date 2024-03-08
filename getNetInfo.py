@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import ipaddress
+import signal
+import sys
 from tabulate import tabulate
 
 def calculate_network_info(ip, cidr):
@@ -23,7 +25,13 @@ def colorize(text, color):
     }
     return f"{colors[color]}{text}{colors['reset']}"
 
+def signal_handler(sig, frame):
+    print("\n" + colorize("[!] Quitting...", "yellow"))
+    sys.exit(0)
+
 def main():
+    signal.signal(signal.SIGINT, signal_handler)
+
     while True:
         ip_cidr = input(colorize("Enter IP address with CIDR (e.g., 192.168.1.10/24), or 'q' to quit: ", "blue"))
         if ip_cidr.lower() == 'q':
@@ -54,4 +62,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
