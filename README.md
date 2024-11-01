@@ -1,5 +1,10 @@
 <h1>How to use:</h1>
 
+Requires the tabulate library.
+
+You can install it with:
+<code>pip install tabulate</code>
+
 <h3>Calculate CIDR</h3>
 
 1) Execute the script and you will be prompt to enter a CIDR to calculate
