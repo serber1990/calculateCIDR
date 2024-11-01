@@ -4,14 +4,7 @@ import argparse
 import ipaddress
 import sys
 from tabulate import tabulate
-
-# Colors
-RED = "\033[91m"
-GREEN = "\033[92m"
-YELLOW = "\033[93m"
-RESET = "\033[0m"
-CYAN = "\033[0;36m"
-MAGENTA = "\033[0;35m"
+from colorize_term import Color  # Importing from your library
 
 # Function to display help message
 def show_help():
@@ -64,12 +57,12 @@ def calculate_subnets(ip_prefix, divide, binary=False):
             netmask = ip_to_binary(netmask)
         
         subnet_data.append([
-            f"{MAGENTA}{subnet}{RESET}", 
-            f"{YELLOW}{network_id}{RESET}",
-            f"{CYAN}{gateway}{RESET}",
-            f"{RED}{broadcast}{RESET}", 
-            f"{YELLOW}{netmask}{RESET}", 
-            f"{MAGENTA}{hosts}{RESET}"
+            f"{Color.MAGENTA}{subnet}{Color.RESET}", 
+            f"{Color.YELLOW}{network_id}{Color.RESET}",
+            f"{Color.CYAN}{gateway}{Color.RESET}",
+            f"{Color.RED}{broadcast}{Color.RESET}", 
+            f"{Color.YELLOW}{netmask}{Color.RESET}", 
+            f"{Color.MAGENTA}{hosts}{Color.RESET}"
         ])
     return subnet_data
 
@@ -102,8 +95,8 @@ ip_prefix = args.ip.strip().upper()
 
 # Check if the IP has a prefix
 if '/' not in ip_prefix:
-    print(f"{RED}[x] Error:{RESET} The IP does not have a prefix.")
-    print(f"[!] Insert a valid IP with a prefix p.e: {GREEN}10.10.10.10/24{RESET}")
+    print(f"{Color.RED}[x] Error:{Color.RESET} The IP does not have a prefix.")
+    print(f"[!] Insert a valid IP with a prefix p.e: {Color.GREEN}10.10.10.10/24{Color.RESET}")
     sys.exit(1)
 
 # Check if binary display is requested
@@ -114,17 +107,17 @@ if args.divide:
     divide = args.divide
     subnet_data = calculate_subnets(ip_prefix, divide, binary)
     if not subnet_data:
-        print(f"{RED}[x] Error:{RESET} Unable to divide {ip_prefix} into {divide} subnets.")
+        print(f"{Color.RED}[x] Error:{Color.RESET} Unable to divide {ip_prefix} into {divide} subnets.")
         sys.exit(1)
     
     # Display subnets in horizontal format (ignoring -vertical)
     table_data = [[
-        f"{GREEN}Subnet{RESET}", 
-        f"{GREEN}Network ID{RESET}", 
-        f"{GREEN}Gateway{RESET}", 
-        f"{GREEN}Broadcast{RESET}", 
-        f"{GREEN}Netmask{RESET}", 
-        f"{GREEN}Hosts{RESET}"
+        f"{Color.GREEN}Subnet{Color.RESET}", 
+        f"{Color.GREEN}Network ID{Color.RESET}", 
+        f"{Color.GREEN}Gateway{Color.RESET}", 
+        f"{Color.GREEN}Broadcast{Color.RESET}", 
+        f"{Color.GREEN}Netmask{Color.RESET}", 
+        f"{Color.GREEN}Hosts{Color.RESET}"
     ]] + subnet_data
     print(tabulate(table_data, headers="firstrow", tablefmt="grid", colalign=("left",)))
 
@@ -135,18 +128,18 @@ else:
     # Create the table data in vertical format if -vertical option is specified
     if args.vertical:
         table_data = [
-            [f"{GREEN}IP{RESET}", f"{MAGENTA}{ip_prefix}{RESET}"],
-            [f"{GREEN}Network ID{RESET}", f"{YELLOW}{network_id}{RESET}"],
-            [f"{GREEN}Gateway{RESET}", f"{CYAN}{gateway}{RESET}"],
-            [f"{GREEN}Broadcast{RESET}", f"{RED}{broadcast}{RESET}"],
-            [f"{GREEN}Netmask{RESET}", f"{YELLOW}{netmask}{RESET}"],
-            [f"{GREEN}Hosts{RESET}", f"{MAGENTA}{hosts}{RESET}"]
+            [f"{Color.GREEN}IP{Color.RESET}", f"{Color.MAGENTA}{ip_prefix}{Color.RESET}"],
+            [f"{Color.GREEN}Network ID{Color.RESET}", f"{Color.YELLOW}{network_id}{Color.RESET}"],
+            [f"{Color.GREEN}Gateway{Color.RESET}", f"{Color.CYAN}{gateway}{Color.RESET}"],
+            [f"{Color.GREEN}Broadcast{Color.RESET}", f"{Color.RED}{broadcast}{Color.RESET}"],
+            [f"{Color.GREEN}Netmask{Color.RESET}", f"{Color.YELLOW}{netmask}{Color.RESET}"],
+            [f"{Color.GREEN}Hosts{Color.RESET}", f"{Color.MAGENTA}{hosts}{Color.RESET}"]
         ]
         print(tabulate(table_data, tablefmt="grid"))
     else:
         # Display horizontally if -vertical is not specified
         table_data = [
-            [f"{GREEN}IP{RESET}", f"{GREEN}Network ID{RESET}", f"{GREEN}Gateway{RESET}", f"{GREEN}Broadcast{RESET}", f"{GREEN}Netmask{RESET}", f"{GREEN}Hosts{RESET}"],
-            [f"{MAGENTA}{ip_prefix}{RESET}", f"{YELLOW}{network_id}{RESET}", f"{CYAN}{gateway}{RESET}", f"{RED}{broadcast}{RESET}", f"{YELLOW}{netmask}{RESET}", f"{MAGENTA}{hosts}{RESET}"]
+            [f"{Color.GREEN}IP{Color.RESET}", f"{Color.GREEN}Network ID{Color.RESET}", f"{Color.GREEN}Gateway{Color.RESET}", f"{Color.GREEN}Broadcast{Color.RESET}", f"{Color.GREEN}Netmask{Color.RESET}", f"{Color.GREEN}Hosts{Color.RESET}"],
+            [f"{Color.MAGENTA}{ip_prefix}{Color.RESET}", f"{Color.YELLOW}{network_id}{Color.RESET}", f"{Color.CYAN}{gateway}{Color.RESET}", f"{Color.RED}{broadcast}{Color.RESET}", f"{Color.YELLOW}{netmask}{Color.RESET}", f"{Color.MAGENTA}{hosts}{Color.RESET}"]
         ]
         print(tabulate(table_data, headers="firstrow", tablefmt="grid", colalign=("left",)))
