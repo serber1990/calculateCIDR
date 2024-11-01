@@ -1,45 +1,105 @@
-<h1>How to use:</h1>
+# calculateCIDR
 
-Requires the tabulate library.
+calculateCIDR is a Python command-line tool for calculating CIDR network details, with the ability to split networks into subnets, display results in binary format, and output details in either horizontal or vertical format. The tool also leverages ANSI colors to improve readability.
 
-You can install it with:
-<code>pip install tabulate</code>
+---
 
-<h3>Calculate CIDR</h3>
+## ✨ Features
 
-1) Execute the script and you will be prompt to enter a CIDR to calculate
+- 🔢 **CIDR Calculation**: Calculates network ID, gateway, broadcast address, netmask, and host count from any CIDR notation.
+- 🧩 **Subnet Division**: Divides a CIDR block into multiple subnets with calculated properties for each.
+- 🔠 **Binary Display Option**: Displays IPs and subnet masks in binary format for better visualization.
+- 📏 **Flexible Formatting**: Outputs data in horizontal or vertical formats.
+- 🌈 **ANSI Colors**: Uses the `colorize-term` library for colorful terminal output, improving readability.
 
-<code>python cidr_calculator.py -ip 10.200.10.25/24</code>
+---
 
-![image](https://github.com/user-attachments/assets/2d3b9961-73f9-4319-8881-752127d1800e)
+## 📥 Installation
 
-(Optional) You can add the -vertical parameter to display the table in vertical format:
+Clone the repository and install the dependencies:
 
-<code>python cidr_calculator.py -ip 10.200.10.25/24 -vertical</code>
+```bash
+git clone https://github.com/serber1990/calculateCIDR.git
+cd calculateCIDR
+pip install -r requirements.txt
+```
 
-![image](https://github.com/user-attachments/assets/d715f2b9-acc0-4de0-95ef-0fb5faac40f0)
+Install `colorize-term` for colorful output:
+```bash
+pip install colorize-term
+```
 
+---
 
-<h3>Divide CIDR into multiple Subnets</h3>
+## 🛠 Usage
 
-2) If you want to divide a given CIDR into multiple subnets just add the -divide argument:
+```bash
+python calculateCIDR.py -ip <IP/prefix> [-divide <N>] [-binary] [-vertical] [-v] [-h]
+```
 
-<code>python cidr_calculator.py -ip 10.200.10.25/24 -divide 4</code>
+### Options
 
-![image](https://github.com/user-attachments/assets/b0017dff-1f44-4ac7-92d8-eca2e28bc9cf)
+- `-ip <IP/prefix>`: IP address with CIDR prefix (required).
+- `-divide <N>`: Divides the network into `N` subnets (disables vertical display).
+- `-binary`: Displays results in binary format.
+- `-vertical`: Displays results in vertical format (only applicable without `-divide`).
+- `-v`: Shows version information.
+- `-h`: Displays the help message.
 
-<h3>Display in Binary Format</h3>
+---
 
-3) If you want to display a given CIDR or Subnet in binary just add the -binary argument:
+## 🎨 Examples
 
-<code>python cidr_calculator.py -ip 10.200.10.25/24 -binary</code>
+### Basic CIDR Calculation
 
-![image](https://github.com/user-attachments/assets/fa5ba9aa-340e-4dbf-8107-f97fcf802316)
+```bash
+python calculateCIDR.py -ip 192.168.1.0/24
+```
 
-<code>python cidr_calculator.py -ip 10.200.10.25/24 -binary -vertical</code>
+This command outputs the network ID, gateway, broadcast address, netmask, and host count for the specified CIDR.
 
-![image](https://github.com/user-attachments/assets/15e3293b-0827-4c30-a800-643e3c41ec11)
+### Binary Format
 
-<code>python cidr_calculator.py -ip 10.200.10.25/24 -divide 4 -binary</code>
+```bash
+python calculateCIDR.py -ip 192.168.1.0/24 -binary
+```
 
-![image](https://github.com/user-attachments/assets/3d2c0c1a-6eca-43a6-89c9-f37e5cec98f7)
+Displays the results in binary format.
+
+### Subnet Division
+
+```bash
+python calculateCIDR.py -ip 192.168.1.0/24 -divide 4
+```
+
+Divides the network into 4 subnets, displaying each subnet’s details.
+
+### Vertical Format
+
+```bash
+python calculateCIDR.py -ip 192.168.1.0/24 -vertical
+```
+
+Displays the network information in vertical format.
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 💬 Feedback
+
+If you have any questions, issues, or suggestions, please feel free to open an issue in the repository or contact me directly via GitHub.
+
+---
+
+## 🌐 Connect with Me
+
+[![GitHub](https://img.shields.io/badge/GitHub-@serber1990-181717?style=flat-square&logo=github)](https://github.com/serber1990)
+
+---
+
+### 🚀 Let's make CIDR calculations easy and colorful with `calculateCIDR`!
