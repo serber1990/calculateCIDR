@@ -10,7 +10,7 @@ calculateCIDR is a Python command-line tool for calculating CIDR network details
 - 🧩 **Subnet Division**: Divides a CIDR block into multiple subnets with calculated properties for each.
 - 🔠 **Binary Display Option**: Displays IPs and subnet masks in binary format for better visualization.
 - 📏 **Flexible Formatting**: Outputs data in horizontal or vertical formats.
-- 🌈 **ANSI Colors**: Uses the `colorize-term` library for colorful terminal output, improving readability.
+- 🌈 **ANSI Colors**: Uses the `shellcolorize` library for colorful terminal output, improving readability.
 
 ---
 
@@ -24,9 +24,9 @@ cd calculateCIDR
 pip install -r requirements.txt
 ```
 
-Install `colorize-term` for colorful output:
+Install `shellcolorize` for colorful output:
 ```bash
-pip install colorize-term
+pip install shellcolorize
 ```
 
 ---
@@ -34,7 +34,7 @@ pip install colorize-term
 ## 🛠 Usage
 
 ```bash
-python calculateCIDR.py -ip <IP/prefix> [-divide <N>] [-binary] [-vertical] [-v] [-h]
+python cidr_calculator.py -ip <IP/prefix> [-divide <N>] [-binary] [-vertical] [-v] [-h]
 ```
 
 ### Options
@@ -53,7 +53,7 @@ python calculateCIDR.py -ip <IP/prefix> [-divide <N>] [-binary] [-vertical] [-v]
 ### Basic CIDR Calculation
 
 ```bash
-python calculateCIDR.py -ip 192.168.1.0/24
+python cidr_calculator.py -ip 192.168.1.0/24
 ```
 
 This command outputs the network ID, gateway, broadcast address, netmask, and host count for the specified CIDR.
@@ -61,7 +61,7 @@ This command outputs the network ID, gateway, broadcast address, netmask, and ho
 ### Binary Format
 
 ```bash
-python calculateCIDR.py -ip 192.168.1.0/24 -binary
+python cidr_calculator.py -ip 192.168.1.0/24 -binary
 ```
 
 Displays the results in binary format.
@@ -69,7 +69,7 @@ Displays the results in binary format.
 ### Subnet Division
 
 ```bash
-python calculateCIDR.py -ip 192.168.1.0/24 -divide 4
+python cidr_calculator.py -ip 192.168.1.0/24 -divide 4
 ```
 
 Divides the network into 4 subnets, displaying each subnet’s details.
@@ -77,7 +77,7 @@ Divides the network into 4 subnets, displaying each subnet’s details.
 ### Vertical Format
 
 ```bash
-python calculateCIDR.py -ip 192.168.1.0/24 -vertical
+python cidr_calculator.py -ip 192.168.1.0/24 -vertical
 ```
 
 Displays the network information in vertical format.
