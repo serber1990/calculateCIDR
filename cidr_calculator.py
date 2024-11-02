@@ -4,7 +4,7 @@ import argparse
 import ipaddress
 import sys
 from tabulate import tabulate
-from colorize_term import Color
+from shellcolorize import Color
 
 # Function to display help message
 def show_help():
