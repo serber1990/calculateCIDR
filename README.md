@@ -1,32 +1,36 @@
 # calculateCIDR
 
-calculateCIDR is a Python command-line tool for calculating CIDR network details, with the ability to split networks into subnets, display results in binary format, and output details in either horizontal or vertical format. The tool also leverages ANSI colors to improve readability.
+[![PyPI version](https://badge.fury.io/py/cidr-calculator.svg)](https://badge.fury.io/py/cidr-calculator)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://img.shields.io/github/stars/serber1990/calculateCIDR?style=social)](https://github.com/serber1990/calculateCIDR/stargazers)
+
+CLI CIDR network calculator with IPv4 & IPv6 support, wildcard mask, subnet division and binary display.
 
 ---
 
 ## ✨ Features
 
-- 🔢 **CIDR Calculation**: Calculates network ID, gateway, broadcast address, netmask, and host count from any CIDR notation.
-- 🧩 **Subnet Division**: Divides a CIDR block into multiple subnets with calculated properties for each.
-- 🔠 **Binary Display Option**: Displays IPs and subnet masks in binary format for better visualization.
-- 📏 **Flexible Formatting**: Outputs data in horizontal or vertical formats.
-- 🌈 **ANSI Colors**: Uses the `shellcolorize` library for colorful terminal output, improving readability.
+- 🌐 **IPv4 & IPv6** — full support for both address families
+- 🧩 **Subnet division** — split any network into N subnets with correct prefix math
+- 🔢 **Wildcard mask** — inverse netmask (Cisco-style) included in every output
+- 🔠 **Binary display** — view any field in binary octet notation (IPv4)
+- 📏 **Flexible output** — horizontal (default) or vertical format
+- 🌈 **Color-coded** — ANSI colors for fast readability
 
 ---
 
 ## 📥 Installation
 
-Clone the repository and install the dependencies:
+```bash
+pip install cidr-calculator
+```
+
+Or clone and install locally:
 
 ```bash
 git clone https://github.com/serber1990/calculateCIDR.git
 cd calculateCIDR
-pip install -r requirements.txt
-```
-
-Install `shellcolorize` for colorful output:
-```bash
-pip install shellcolorize
+pip install -e .
 ```
 
 ---
@@ -34,72 +38,74 @@ pip install shellcolorize
 ## 🛠 Usage
 
 ```bash
-python cidr_calculator.py -ip <IP/prefix> [-divide <N>] [-binary] [-vertical] [-v] [-h]
+cidr -ip <IP/PREFIX> [-divide N] [-binary] [-vertical] [-v] [-h]
 ```
 
-### Options
-
-- `-ip <IP/prefix>`: IP address with CIDR prefix (required).
-- `-divide <N>`: Divides the network into `N` subnets (disables vertical display).
-- `-binary`: Displays results in binary format.
-- `-vertical`: Displays results in vertical format (only applicable without `-divide`).
-- `-v`: Shows version information.
-- `-h`: Displays the help message.
+| Flag | Description |
+|------|-------------|
+| `-ip IP/PREFIX` | IP address with CIDR prefix — **required** |
+| `-divide N` | Split the network into N subnets |
+| `-binary` | Display results in binary (IPv4 only) |
+| `-vertical` | Vertical output format (without `-divide`) |
+| `-v` | Show version |
+| `-h` | Show help |
 
 ---
 
 ## 🎨 Examples
 
-### Basic CIDR Calculation
+### Basic calculation
 
 ```bash
-python cidr_calculator.py -ip 192.168.1.0/24
+cidr -ip 192.168.1.0/24
 ```
 
-This command outputs the network ID, gateway, broadcast address, netmask, and host count for the specified CIDR.
+```
++-----------------+-------------+-----------+-----------+-----------------+---------------+---------------+---------+
+| Network         | Network ID  | Gateway   | Last Host | Broadcast       | Netmask       | Wildcard      | Hosts   |
++=================+=============+===========+===========+=================+===============+===============+=========+
+| 192.168.1.0/24  | 192.168.1.0 | 192.168.1.1 | 192.168.1.254 | 192.168.1.255 | 255.255.255.0 | 0.0.0.255 | 254 |
++-----------------+-------------+-----------+-----------+-----------------+---------------+---------------+---------+
+```
 
-### Binary Format
+### Vertical format
 
 ```bash
-python cidr_calculator.py -ip 192.168.1.0/24 -binary
+cidr -ip 10.0.0.0/8 -vertical
 ```
 
-Displays the results in binary format.
-
-### Subnet Division
+### Subnet division
 
 ```bash
-python cidr_calculator.py -ip 192.168.1.0/24 -divide 4
+cidr -ip 192.168.1.0/24 -divide 4
 ```
 
-Divides the network into 4 subnets, displaying each subnet’s details.
+Splits `/24` into 4 subnets (`/26`), showing network ID, gateway, last host, broadcast, netmask, wildcard and host count for each.
 
-### Vertical Format
+### Binary display
 
 ```bash
-python cidr_calculator.py -ip 192.168.1.0/24 -vertical
+cidr -ip 192.168.1.0/24 -binary
 ```
 
-Displays the network information in vertical format.
+### IPv6
+
+```bash
+cidr -ip 2001:db8::/32
+```
 
 ---
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
 
 ---
 
 ## 💬 Feedback
 
-If you have any questions, issues, or suggestions, please feel free to open an issue in the repository or contact me directly via GitHub.
+Open an issue or reach out via GitHub.
 
----
-
-## 🌐 Connect with Me
+## 🌐 Connect
 
 [![GitHub](https://img.shields.io/badge/GitHub-@serber1990-181717?style=flat-square&logo=github)](https://github.com/serber1990)
-
----
-
-### 🚀 Let's make CIDR calculations easy and colorful with `calculateCIDR`!

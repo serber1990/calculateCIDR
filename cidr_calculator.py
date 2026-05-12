@@ -1,145 +1,251 @@
 #!/usr/bin/env python3
-
 import argparse
 import ipaddress
+import math
+import re
 import sys
-from tabulate import tabulate
 from shellcolorize import Color
 
-# Function to display help message
-def show_help():
-    print("Usage: {} -ip <IP/prefix> [-divide <N>] [-binary] [-vertical] [-v] [-h]".format(sys.argv[0]))
-    print("Options:")
-    print("  -ip <IP/prefix>: IP address with prefix (required)")
-    print("  -divide <N>: Divide the network into N subnets (disables vertical display)")
-    print("  -binary: Display results in binary format")
-    print("  -vertical: Display results in vertical format (applies only without -divide)")
-    print("  -v: Display version information")
-    print("  -h: Display this help message")
+VERSION = "2.0.0"
 
-# Function to convert IP address to binary format
-def ip_to_binary(ip):
-    return ".".join(f"{int(octet):08b}" for octet in ip.split("."))
+# ── ANSI helpers ──────────────────────────────────────────────────────────────
 
-# Function to calculate network details
-def calculate_network(ip_prefix, binary=False):
-    network = ipaddress.ip_network(ip_prefix, strict=False)
-    netmask = str(network.netmask)
-    network_id = str(network.network_address)
-    gateway = str(list(network.hosts())[0]) if network.num_addresses > 2 else "N/A"
-    broadcast = str(network.broadcast_address)
-    hosts = network.num_addresses - 2 if network.num_addresses > 2 else 0
-    
-    if binary:
-        netmask = ip_to_binary(netmask)
-        network_id = ip_to_binary(network_id)
-        gateway = ip_to_binary(gateway) if gateway != "N/A" else "N/A"
+_ANSI = re.compile(r'\033\[[0-9;]*m')
+
+def _vlen(s: str) -> int:
+    """Visible length of a string (strips ANSI codes)."""
+    return len(_ANSI.sub('', s))
+
+def _pad(s: str, width: int) -> str:
+    """Left-pad a string to visible width."""
+    return s + ' ' * max(0, width - _vlen(s))
+
+# ── Display helpers ───────────────────────────────────────────────────────────
+
+def _header(line1: str, line2: str = '') -> None:
+    inner = f' {line1}'
+    if line2:
+        inner += f'  {Color.DIM}·{Color.RESET}  {line2}'
+    w = max(46, _vlen(inner) + 4)
+    border = f"{Color.CYAN}{'═' * w}{Color.RESET}"
+    print()
+    print(f"  {Color.CYAN}╔{border}╗{Color.RESET}")
+    print(f"  {Color.CYAN}║{Color.RESET}{Color.BOLD}{inner}{Color.RESET}"
+          + ' ' * max(0, w - _vlen(inner))
+          + f"  {Color.CYAN}║{Color.RESET}")
+    print(f"  {Color.CYAN}╚{border}╝{Color.RESET}")
+    print()
+
+def _row(label: str, value: str, label_w: int, value_color: str = '') -> None:
+    lbl = f"  {Color.GREEN}{label:<{label_w}}{Color.RESET}  "
+    val = f"{value_color}{value}{Color.RESET}" if value_color else value
+    print(lbl + val)
+
+def _separator(width: int = 72) -> None:
+    print(f"  {Color.DIM}{'─' * width}{Color.RESET}")
+
+# ── Network math ──────────────────────────────────────────────────────────────
+
+def ip_to_binary(ip: str) -> str:
+    return '.'.join(f'{int(o):08b}' for o in ip.split('.'))
+
+
+def _first_last(network: ipaddress._BaseNetwork):
+    if network.num_addresses <= 2:
+        return 'N/A', 'N/A'
+    return str(network.network_address + 1), str(network.broadcast_address - 1)
+
+
+def calculate_network(ip_prefix: str, binary: bool = False) -> dict:
+    net = ipaddress.ip_network(ip_prefix, strict=False)
+    is_v6 = net.version == 6
+
+    nid       = str(net.network_address)
+    broadcast = str(net.broadcast_address) if not is_v6 else 'N/A'
+    netmask   = str(net.netmask)
+    wildcard  = str(net.hostmask)
+    gateway, last_host = _first_last(net)
+    total = net.num_addresses
+    hosts = max(0, total - 2) if not is_v6 else total
+
+    if binary and not is_v6:
+        nid       = ip_to_binary(nid)
         broadcast = ip_to_binary(broadcast)
-    
-    return (netmask, network_id, gateway, broadcast, hosts)
+        netmask   = ip_to_binary(netmask)
+        wildcard  = ip_to_binary(wildcard)
+        if gateway   != 'N/A': gateway   = ip_to_binary(gateway)
+        if last_host != 'N/A': last_host = ip_to_binary(last_host)
 
-# Function to calculate subnets
-def calculate_subnets(ip_prefix, divide, binary=False):
-    network = ipaddress.ip_network(ip_prefix, strict=False)
-    subnets = list(network.subnets(new_prefix=network.prefixlen + (divide.bit_length() - 1)))
-    subnet_data = []
-    for i, subnet in enumerate(subnets[:divide]):
-        network_id = str(subnet.network_address)
-        gateway = str(list(subnet.hosts())[0]) if subnet.num_addresses > 2 else "N/A"
-        broadcast = str(subnet.broadcast_address)
-        netmask = str(subnet.netmask)
-        hosts = subnet.num_addresses - 2 if subnet.num_addresses > 2 else 0
-        
-        if binary:
-            network_id = ip_to_binary(network_id)
-            gateway = ip_to_binary(gateway) if gateway != "N/A" else "N/A"
-            broadcast = ip_to_binary(broadcast)
-            netmask = ip_to_binary(netmask)
-        
-        subnet_data.append([
-            f"{Color.MAGENTA}{subnet}{Color.RESET}", 
-            f"{Color.YELLOW}{network_id}{Color.RESET}",
-            f"{Color.CYAN}{gateway}{Color.RESET}",
-            f"{Color.RED}{broadcast}{Color.RESET}", 
-            f"{Color.YELLOW}{netmask}{Color.RESET}", 
-            f"{Color.MAGENTA}{hosts}{Color.RESET}"
+    return {
+        'network': str(net), 'network_id': nid,
+        'gateway': gateway, 'last_host': last_host,
+        'broadcast': broadcast, 'netmask': netmask,
+        'wildcard': wildcard, 'prefix': net.prefixlen,
+        'hosts': hosts, 'is_v6': is_v6,
+    }
+
+
+def calculate_subnets(ip_prefix: str, divide: int, binary: bool = False):
+    net = ipaddress.ip_network(ip_prefix, strict=False)
+    is_v6 = net.version == 6
+    max_pfx = 128 if is_v6 else 32
+
+    bits = math.ceil(math.log2(divide)) if divide > 1 else 0
+    new_pfx = net.prefixlen + bits
+    if new_pfx > max_pfx:
+        return [], new_pfx
+
+    rows = []
+    for subnet in list(net.subnets(new_prefix=new_pfx))[:divide]:
+        nid      = str(subnet.network_address)
+        bc       = str(subnet.broadcast_address) if not is_v6 else 'N/A'
+        nm       = str(subnet.netmask)
+        wc       = str(subnet.hostmask)
+        gw, last = _first_last(subnet)
+        total    = subnet.num_addresses
+        hosts    = max(0, total - 2) if not is_v6 else total
+
+        if binary and not is_v6:
+            nid  = ip_to_binary(nid)
+            bc   = ip_to_binary(bc)
+            nm   = ip_to_binary(nm)
+            wc   = ip_to_binary(wc)
+            if gw   != 'N/A': gw   = ip_to_binary(gw)
+            if last != 'N/A': last = ip_to_binary(last)
+
+        rows.append({
+            'subnet': str(subnet), 'network_id': nid,
+            'gateway': gw, 'last_host': last,
+            'broadcast': bc, 'netmask': nm,
+            'wildcard': wc, 'hosts': hosts,
+        })
+    return rows, new_pfx
+
+# ── Output ────────────────────────────────────────────────────────────────────
+
+def print_network(info: dict) -> None:
+    version = 'IPv6' if info['is_v6'] else 'IPv4'
+    _header(info['network'], version)
+
+    fields = [
+        ('Network ID', Color.YELLOW,  info['network_id']),
+        ('Gateway',    Color.CYAN,    info['gateway']),
+        ('Last Host',  Color.CYAN,    info['last_host']),
+    ]
+    if not info['is_v6']:
+        fields.append(('Broadcast', Color.RED, info['broadcast']))
+    fields += [
+        ('Netmask',  '',             info['netmask']),
+        ('Wildcard', Color.MAGENTA,  info['wildcard']),
+        ('Prefix',   '',             f"/{info['prefix']}"),
+        ('Hosts',    Color.YELLOW + Color.BOLD, f"{info['hosts']:,}"),
+    ]
+
+    lw = max(len(f[0]) for f in fields)
+    for label, color, value in fields:
+        _row(label, value, lw, color)
+    print()
+
+
+def print_subnets(rows: list, ip_prefix: str, divide: int, new_pfx: int) -> None:
+    _header(f'{ip_prefix}', f'{divide} subnets  /  new prefix  /{new_pfx}')
+
+    cols = ['#', 'Subnet', 'Network ID', 'Gateway', 'Last Host',
+            'Broadcast', 'Netmask', 'Wildcard', 'Hosts']
+
+    # Build raw (no color) data for width calculation
+    raw = []
+    for i, r in enumerate(rows):
+        raw.append([
+            str(i + 1), r['subnet'], r['network_id'], r['gateway'],
+            r['last_host'], r['broadcast'], r['netmask'], r['wildcard'],
+            f"{r['hosts']:,}",
         ])
-    return subnet_data
 
-# Parse command line arguments
-parser = argparse.ArgumentParser()
-parser.add_argument("-ip", help="IP address with prefix (required)")
-parser.add_argument("-divide", type=int, help="Divide the network into N subnets (disables vertical display)")
-parser.add_argument("-binary", action="store_true", help="Display results in binary format")
-parser.add_argument("-vertical", action="store_true", help="Display results in vertical format (only without -divide)")
-parser.add_argument("-v", action="store_true", help="Display version information")
-args = parser.parse_args()
+    # Column widths = max of header vs data
+    widths = [max(len(cols[j]), max((len(raw[i][j]) for i in range(len(raw))), default=0))
+              for j in range(len(cols))]
 
-# Display version information
-if args.v:
-    print("Version 1.0 by Serber")
-    sys.exit(0)
+    # Header row
+    header_cells = [
+        f"{Color.GREEN}{Color.BOLD}{cols[j]:<{widths[j]}}{Color.RESET}"
+        for j in range(len(cols))
+    ]
+    print('  ' + '  '.join(header_cells))
+    _separator(sum(widths) + 2 * (len(widths) - 1))
 
-# Display help message if no arguments provided
-if len(sys.argv) == 1:
-    show_help()
-    sys.exit(0)
+    # Value colors per column
+    value_colors = [
+        '',             # #
+        Color.YELLOW,   # Subnet
+        Color.YELLOW,   # Network ID
+        Color.CYAN,     # Gateway
+        Color.CYAN,     # Last Host
+        Color.RED,      # Broadcast
+        '',             # Netmask
+        Color.MAGENTA,  # Wildcard
+        Color.YELLOW + Color.BOLD,  # Hosts
+    ]
 
-# Display help message if -h option provided
-if args.ip is None:
-    show_help()
-    sys.exit(0)
+    for i, r in enumerate(raw):
+        cells = [
+            _pad(f"{value_colors[j]}{r[j]}{Color.RESET}" if value_colors[j] else r[j], widths[j])
+            for j in range(len(cols))
+        ]
+        print('  ' + '  '.join(cells))
+    print()
 
-# Prompt user to input IP/prefix
-ip_prefix = args.ip.strip().upper()
+# ── CLI ───────────────────────────────────────────────────────────────────────
 
-# Check if the IP has a prefix
-if '/' not in ip_prefix:
-    print(f"{Color.RED}[x] Error:{Color.RESET} The IP does not have a prefix.")
-    print(f"[!] Insert a valid IP with a prefix p.e: {Color.GREEN}10.10.10.10/24{Color.RESET}")
-    sys.exit(1)
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog='cidr',
+        description='CIDR network calculator — IPv4 & IPv6',
+        add_help=False,
+    )
+    parser.add_argument('-ip', '--ip', metavar='IP/PREFIX',
+                        help='IP address with CIDR prefix  (e.g. 192.168.1.0/24 or 2001:db8::/32)')
+    parser.add_argument('-divide', '--divide', type=int, metavar='N',
+                        help='Divide the network into N subnets')
+    parser.add_argument('-binary', '--binary', action='store_true',
+                        help='Display IPs in binary format (IPv4 only)')
+    parser.add_argument('-vertical', '--vertical', action='store_true',
+                        help='Kept for backward compatibility (layout is always clean)')
+    parser.add_argument('-v', '--version', action='store_true', help='Show version and exit')
+    parser.add_argument('-h', '--help',    action='store_true', help='Show this help and exit')
+    args = parser.parse_args()
 
-# Check if binary display is requested
-binary = args.binary
+    if args.version:
+        print(f'cidr v{VERSION}')
+        sys.exit(0)
 
-# Calculate and display subnets if -divide option is provided
-if args.divide:
-    divide = args.divide
-    subnet_data = calculate_subnets(ip_prefix, divide, binary)
-    if not subnet_data:
-        print(f"{Color.RED}[x] Error:{Color.RESET} Unable to divide {ip_prefix} into {divide} subnets.")
+    if args.help or args.ip is None:
+        parser.print_help()
+        sys.exit(0)
+
+    try:
+        net = ipaddress.ip_network(args.ip.strip(), strict=False)
+    except ValueError as e:
+        print(f'\n  {Color.RED}✖  Error:{Color.RESET} {e}\n')
         sys.exit(1)
-    
-    # Display subnets in horizontal format (ignoring -vertical)
-    table_data = [[
-        f"{Color.GREEN}Subnet{Color.RESET}", 
-        f"{Color.GREEN}Network ID{Color.RESET}", 
-        f"{Color.GREEN}Gateway{Color.RESET}", 
-        f"{Color.GREEN}Broadcast{Color.RESET}", 
-        f"{Color.GREEN}Netmask{Color.RESET}", 
-        f"{Color.GREEN}Hosts{Color.RESET}"
-    ]] + subnet_data
-    print(tabulate(table_data, headers="firstrow", tablefmt="grid", colalign=("left",)))
 
-else:
-    # Calculate main network details with Gateway column
-    netmask, network_id, gateway, broadcast, hosts = calculate_network(ip_prefix, binary)
+    ip_prefix = str(net)
 
-    # Create the table data in vertical format if -vertical option is specified
-    if args.vertical:
-        table_data = [
-            [f"{Color.GREEN}IP{Color.RESET}", f"{Color.MAGENTA}{ip_prefix}{Color.RESET}"],
-            [f"{Color.GREEN}Network ID{Color.RESET}", f"{Color.YELLOW}{network_id}{Color.RESET}"],
-            [f"{Color.GREEN}Gateway{Color.RESET}", f"{Color.CYAN}{gateway}{Color.RESET}"],
-            [f"{Color.GREEN}Broadcast{Color.RESET}", f"{Color.RED}{broadcast}{Color.RESET}"],
-            [f"{Color.GREEN}Netmask{Color.RESET}", f"{Color.YELLOW}{netmask}{Color.RESET}"],
-            [f"{Color.GREEN}Hosts{Color.RESET}", f"{Color.MAGENTA}{hosts}{Color.RESET}"]
-        ]
-        print(tabulate(table_data, tablefmt="grid"))
+    if args.divide:
+        if args.divide < 1:
+            print(f'\n  {Color.RED}✖  Error:{Color.RESET} -divide must be a positive integer.\n')
+            sys.exit(1)
+        rows, new_pfx = calculate_subnets(ip_prefix, args.divide, args.binary)
+        if not rows:
+            max_p = 128 if net.version == 6 else 32
+            print(f'\n  {Color.RED}✖  Error:{Color.RESET} Cannot divide {ip_prefix} into '
+                  f'{args.divide} subnets — prefix would exceed /{max_p}.\n')
+            sys.exit(1)
+        print_subnets(rows, ip_prefix, args.divide, new_pfx)
     else:
-        # Display horizontally if -vertical is not specified
-        table_data = [
-            [f"{Color.GREEN}IP{Color.RESET}", f"{Color.GREEN}Network ID{Color.RESET}", f"{Color.GREEN}Gateway{Color.RESET}", f"{Color.GREEN}Broadcast{Color.RESET}", f"{Color.GREEN}Netmask{Color.RESET}", f"{Color.GREEN}Hosts{Color.RESET}"],
-            [f"{Color.MAGENTA}{ip_prefix}{Color.RESET}", f"{Color.YELLOW}{network_id}{Color.RESET}", f"{Color.CYAN}{gateway}{Color.RESET}", f"{Color.RED}{broadcast}{Color.RESET}", f"{Color.YELLOW}{netmask}{Color.RESET}", f"{Color.MAGENTA}{hosts}{Color.RESET}"]
-        ]
-        print(tabulate(table_data, headers="firstrow", tablefmt="grid", colalign=("left",)))
+        info = calculate_network(ip_prefix, args.binary)
+        print_network(info)
+
+
+if __name__ == '__main__':
+    main()
