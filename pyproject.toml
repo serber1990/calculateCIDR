@@ -1,30 +1,49 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "cidr-calculator"
-version = "2.0.0"
-description = "CLI CIDR network calculator — IPv4 & IPv6, wildcard mask, subnet division, binary display"
+dynamic = ["version"]
+description = "CLI CIDR network calculator — IPv4 & IPv6, subnet division, address type, binary and JSON output"
 readme = "README.md"
 license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Serber1990", email = "serber1990@pm.me" }]
-requires-python = ">=3.8"
-dependencies = ["shellcolorize", "tabulate"]
+requires-python = ">=3.9"
+dependencies = ["shellcolorize>=1.1.0"]
+keywords = ["cidr", "subnet", "ipv4", "ipv6", "network", "calculator", "sysadmin"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
     "Environment :: Console",
+    "Intended Audience :: System Administrators",
     "Topic :: System :: Networking",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.4"]
 
 [project.urls]
 Homepage     = "https://github.com/serber1990/calculateCIDR"
 "Bug Tracker" = "https://github.com/serber1990/calculateCIDR/issues"
 "Source Code" = "https://github.com/serber1990/calculateCIDR"
+Changelog    = "https://github.com/serber1990/calculateCIDR/blob/main/CHANGELOG.md"
 
 [project.scripts]
-cidr = "cidr_calculator:main"
+cidr = "cidr_calculator:run"
 
 [tool.setuptools]
 py-modules = ["cidr_calculator"]
+
+[tool.setuptools.dynamic]
+version = { attr = "cidr_calculator.VERSION" }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E9", "F", "B"]
