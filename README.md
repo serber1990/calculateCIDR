@@ -8,6 +8,10 @@
 Fast CIDR network calculator for the terminal: IPv4 & IPv6, subnet division, address classification,
 binary view and JSON output for scripts.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/serber1990/calculateCIDR/main/docs/demo.gif" alt="cidr demo: network details, subnet division and JSON output" width="820">
+</p>
+
 ---
 
 ## ✨ Features
